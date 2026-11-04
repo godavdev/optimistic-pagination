@@ -3,6 +3,11 @@ import { createServerFn } from '@tanstack/react-start'
 import { prisma } from '../../db'
 import { todoSchema } from './model'
 
+const MUTATION_DELAY_MS = 10_000
+
+const delay = (ms = MUTATION_DELAY_MS) =>
+  new Promise((resolve) => setTimeout(resolve, ms))
+
 const todoIdSchema = todoSchema.pick({ id: true })
 
 const createTodoSchema = todoSchema
@@ -36,6 +41,7 @@ export const getTodoById = createServerFn({ method: 'GET' })
 export const createTodo = createServerFn({ method: 'POST' })
   .validator(createTodoSchema)
   .handler(async ({ data }) => {
+    await delay()
     const todo = await prisma.todo.create({
       data: {
         title: data.title,
@@ -53,6 +59,7 @@ export const createTodo = createServerFn({ method: 'POST' })
 export const updateTodo = createServerFn({ method: 'POST' })
   .validator(updateTodoSchema)
   .handler(async ({ data }) => {
+    await delay()
     const { id, ...fields } = data
     const todo = await prisma.todo.update({
       where: { id },
@@ -74,6 +81,7 @@ export const updateTodo = createServerFn({ method: 'POST' })
 export const deleteTodo = createServerFn({ method: 'POST' })
   .validator(todoIdSchema)
   .handler(async ({ data }) => {
+    await delay()
     await prisma.todo.delete({ where: { id: data.id } })
     return { id: data.id }
   })
