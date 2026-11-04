@@ -10,15 +10,30 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Clear existing todos
   await prisma.todo.deleteMany()
 
-  // Create example todos
   const todos = await prisma.todo.createMany({
     data: [
-      { title: 'Buy groceries' },
-      { title: 'Read a book' },
-      { title: 'Workout' },
+      {
+        title: 'Buy groceries',
+        description: 'Milk, eggs and bread',
+        status: 'pending',
+      },
+      {
+        title: 'Read a book',
+        description: 'Finish chapter 10',
+        status: 'pending',
+      },
+      {
+        title: 'Workout',
+        description: null,
+        status: 'completed',
+      },
+      {
+        title: 'Old project',
+        description: 'Archived example',
+        status: 'archived',
+      },
     ],
   })
 
