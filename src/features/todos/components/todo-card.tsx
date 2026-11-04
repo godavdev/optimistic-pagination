@@ -42,11 +42,10 @@ export const TodoCard = ({ todo }: { todo: Todo }) => {
       await updateTodo({
         data,
       }),
-    onError: (error, createdTodo, onMutateResult, context) => {
-      context.client.setQueryData(["todos"], onMutateResult?.previousTodos)
-      console.log("Error updating todo:", error)
-    },
-    onMutate: async (updatedTodo, context) => {
+    onMutate: async (
+      updatedTodo,
+      context,
+    ): Promise<{ previousTodos: Todo[] }> => {
       await context.client.cancelQueries({ queryKey: ["todos"] })
       const previousTodos: Todo[] = context.client.getQueryData(["todos"]) ?? []
 
@@ -68,6 +67,9 @@ export const TodoCard = ({ todo }: { todo: Todo }) => {
 
       context.client.setQueryData(["todos"], newTodos)
       return { previousTodos }
+    },
+    onError: (err, newTodo, onMutateResult, context) => {
+      context.client.setQueryData(["todos"], onMutateResult?.previousTodos)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] })
