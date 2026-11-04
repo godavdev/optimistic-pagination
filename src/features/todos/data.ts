@@ -6,8 +6,8 @@ import { todoSchema } from './model'
 const todoIdSchema = todoSchema.pick({ id: true })
 
 const createTodoSchema = todoSchema
-  .pick({ title: true, description: true, status: true })
-  .partial({ description: true, status: true })
+  .pick({ title: true, description: true })
+  .partial({ description: true })
 
 const updateTodoSchema = todoSchema
   .pick({ id: true, title: true, description: true, status: true })
@@ -40,7 +40,7 @@ export const createTodo = createServerFn({ method: 'POST' })
       data: {
         title: data.title,
         description: data.description ?? null,
-        status: data.status ?? 'pending',
+        status: 'pending',
       },
     })
     return {

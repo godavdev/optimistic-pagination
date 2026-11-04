@@ -6,15 +6,16 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --port 3000",
-    "generate-routes": "vite build",
-    "build": "vite build",
-    "preview": "vite preview",
-    "db:generate": "dotenv -e .env.local -- prisma generate",
-    "db:push": "dotenv -e .env.local -- prisma db push",
-    "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
-    "db:studio": "dotenv -e .env.local -- prisma studio",
-    "db:seed": "dotenv -e .env.local -- prisma db seed"
+    "db:init": "bun run db:generate && bun run db:push",
+    "dev": "bunx vite dev --port 3000",
+    "generate-routes": "bunx vite build",
+    "build": "bunx vite build",
+    "preview": "bunx vite preview",
+    "db:generate": "bunx --bun prisma generate",
+    "db:push": "bunx --bun prisma db push",
+    "db:migrate": "bunx --bun prisma migrate dev",
+    "db:studio": "bunx --bun prisma studio",
+    "db:seed": "bunx --bun prisma db seed"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

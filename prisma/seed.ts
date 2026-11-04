@@ -1,41 +1,62 @@
-import { PrismaClient } from '../src/generated/prisma/client.js'
+import { prisma } from "#/db"
 
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3'
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL || 'file:./dev.db',
-})
 
-const prisma = new PrismaClient({ adapter })
+const TOTAL_TODOS = 1000
+
+const topics = [
+  'Review optimistic pagination',
+  'Buy groceries',
+  'Read a book',
+  'Workout session',
+  'Write documentation',
+  'Fix login bug',
+  'Prepare presentation',
+  'Team meeting',
+  'Deploy to production',
+  'Refactor data layer',
+  'Update dependencies',
+  'Design new landing page',
+  'Call client',
+  'Pay invoices',
+  'Clean up inbox',
+  'Plan sprint',
+  'Test new feature',
+  'Backup database',
+  'Review pull requests',
+  'Organize files',
+]
+
+function statusFor(index: number) {
+  const mod = index % 10
+  if (mod < 6) return 'pending' as const
+  if (mod < 9) return 'completed' as const
+  return 'archived' as const
+}
 
 async function main() {
   console.log('🌱 Seeding database...')
 
   await prisma.todo.deleteMany()
 
-  const todos = await prisma.todo.createMany({
-    data: [
-      {
-        title: 'Buy groceries',
-        description: 'Milk, eggs and bread',
-        status: 'pending',
-      },
-      {
-        title: 'Read a book',
-        description: 'Finish chapter 10',
-        status: 'pending',
-      },
-      {
-        title: 'Workout',
-        description: null,
-        status: 'completed',
-      },
-      {
-        title: 'Old project',
-        description: 'Archived example',
-        status: 'archived',
-      },
-    ],
+  const now = Date.now()
+
+  const data = Array.from({ length: TOTAL_TODOS }, (_, index) => {
+    const topic = topics[index % topics.length]
+    const createdAt = new Date(now - index * 60_000)
+
+    return {
+      title: `${topic} #${index + 1}`,
+      description:
+        index % 5 === 0
+          ? null
+          : `Generated todo number ${index + 1} for optimistic pagination testing.`,
+      status: statusFor(index),
+      createdAt,
+      updatedAt: createdAt,
+    }
   })
+
+  const todos = await prisma.todo.createMany({ data })
 
   console.log(`✅ Created ${todos.count} todos`)
 }
