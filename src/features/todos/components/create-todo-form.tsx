@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { createTodo } from "@/features/todos/data"
+import type { Todo } from "../model"
 
 const FORM_ID = "form-create-todo"
 
@@ -53,14 +54,49 @@ export const CreateTodoForm = () => {
     },
   })
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await createTodo({
-      data: {
-        title: values.title,
-        description: values.description ? values.description : undefined,
-      },
-    })
-    queryClient.invalidateQueries({ queryKey: ["todos"] })
+  const mutation = useMutation({
+    mutationFn: async ({
+      title,
+      description,
+    }: {
+      title: string
+      description?: string | undefined
+    }) =>
+      await createTodo({
+        data: {
+          title,
+          description: description || undefined,
+        },
+      }),
+    onError: (error, createdTodo, onMutateResult, context) => {
+      context.client.setQueryData(["todos"], onMutateResult?.previousTodos)
+      console.log("Error creating todo:", error)
+    },
+    onSuccess: () => {
+      console.log("Todo created successfully")
+    },
+    onMutate: async (createdTodo, context) => {
+      await context.client.cancelQueries({ queryKey: ["todos"] })
+      const previousTodos: Todo[] = context.client.getQueryData(["todos"]) ?? []
+      const newTodo: Todo = {
+        id: "temp-id" + new Date().getTime(),
+        title: createdTodo.title,
+        description: createdTodo.description || null,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      const newTodos = [newTodo, ...(previousTodos || [])]
+      context.client.setQueryData(["todos"], newTodos)
+      return { previousTodos }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] })
+    },
+  })
+
+  const onSubmit = form.handleSubmit((values) => {
+    mutation.mutate(values)
     setTimeout(() => {
       form.reset()
     }, 0)

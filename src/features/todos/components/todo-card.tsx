@@ -1,6 +1,6 @@
 "use client"
 
-import { useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Archive, Check, Trash2, Undo2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -32,9 +32,50 @@ const statusClasses: Record<TodoStatus, string> = {
 export const TodoCard = ({ todo }: { todo: Todo }) => {
   const queryClient = useQueryClient()
 
-  const handleUpdate = async (status: TodoStatus) => {
-    await updateTodo({ data: { id: todo.id, status } })
-    queryClient.invalidateQueries({ queryKey: ["todos"] })
+  const mutationUpdate = useMutation({
+    mutationFn: async (data: {
+      id: string
+      status?: "pending" | "completed" | "archived" | undefined
+      title?: string | undefined
+      description?: string | null | undefined
+    }) =>
+      await updateTodo({
+        data,
+      }),
+    onError: (error, createdTodo, onMutateResult, context) => {
+      context.client.setQueryData(["todos"], onMutateResult?.previousTodos)
+      console.log("Error updating todo:", error)
+    },
+    onMutate: async (updatedTodo, context) => {
+      await context.client.cancelQueries({ queryKey: ["todos"] })
+      const previousTodos: Todo[] = context.client.getQueryData(["todos"]) ?? []
+
+      const updatedTodoIndex = previousTodos.findIndex(
+        (t) => t.id === updatedTodo.id,
+      )
+      if (updatedTodoIndex === -1) {
+        return { previousTodos }
+      }
+
+      const updatedTodoData: Todo = {
+        ...previousTodos[updatedTodoIndex],
+        ...updatedTodo,
+        updatedAt: new Date().toISOString(),
+      }
+
+      const newTodos = [...previousTodos]
+      newTodos[updatedTodoIndex] = updatedTodoData
+
+      context.client.setQueryData(["todos"], newTodos)
+      return { previousTodos }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] })
+    },
+  })
+
+  const handleUpdate = (status: TodoStatus) => {
+    mutationUpdate.mutate({ id: todo.id, status })
   }
 
   const handleDelete = async () => {
@@ -43,12 +84,15 @@ export const TodoCard = ({ todo }: { todo: Todo }) => {
   }
 
   return (
-    <Card size="sm" className="w-full">
+    <Card
+      size="sm"
+      className="w-full"
+    >
       <CardHeader>
         <CardTitle
           className={cn(
             todo.status === "completed" && "line-through",
-            todo.status === "archived" && "text-muted-foreground"
+            todo.status === "archived" && "text-muted-foreground",
           )}
         >
           {todo.title}
@@ -75,12 +119,14 @@ export const TodoCard = ({ todo }: { todo: Todo }) => {
 
       <CardContent className="space-y-3">
         {todo.description ? (
-          <p className="leading-relaxed whitespace-pre-wrap">{todo.description}</p>
+          <p className="leading-relaxed whitespace-pre-wrap">
+            {todo.description}
+          </p>
         ) : null}
         <span
           className={cn(
             "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-wider uppercase",
-            statusClasses[todo.status]
+            statusClasses[todo.status],
           )}
         >
           {statusLabels[todo.status]}
