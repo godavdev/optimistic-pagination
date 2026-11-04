@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "openrouter": {
+      "models": {
+        "stealth/crouton-alpha": {
+          "name": "Crouton Alpha",
+          "modelID": "stealth/crouton-alpha"
+        }
+      }
+    }
+  }
+}

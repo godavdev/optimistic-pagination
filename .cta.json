@@ -1,0 +1,26 @@
+{
+  "bundler": "vite",
+  "projectName": "optimistic-pagination",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": false,
+  "tailwind": true,
+  "projectPreset": "default",
+  "routerOnly": false,
+  "addOnOptions": {
+    "prisma": {
+      "database": "sqlite"
+    }
+  },
+  "git": true,
+  "install": true,
+  "intent": true,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "prisma",
+    "compiler",
+    "tanstack-query"
+  ]
+}
