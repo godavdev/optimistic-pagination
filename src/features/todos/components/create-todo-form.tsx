@@ -94,7 +94,6 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
         description: `"${savedTodo.title}" was added to your list.`,
         type: "success",
       })
-      onCreated?.()
 
       if (!onMutateResult) {
         return
@@ -130,9 +129,8 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
   const onSubmit = form.handleSubmit((values) => {
     mutation.mutate(values)
     form.reset()
+    onCreated?.()
   })
-
-  const isSubmitting = mutation.isPending
 
   return (
     <form
@@ -156,7 +154,6 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
                 aria-invalid={fieldState.invalid}
                 placeholder="E.g.: Review optimistic pagination"
                 autoComplete="off"
-                disabled={isSubmitting}
               />
               <FieldDescription>Max 200 characters.</FieldDescription>
               {fieldState.invalid && (
@@ -181,7 +178,6 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
                 placeholder="Optional todo details…"
                 rows={4}
                 className="min-h-24 resize-none"
-                disabled={isSubmitting}
               />
               <FieldDescription>
                 Optional. Max 2000 characters.
@@ -198,17 +194,11 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
         <Button
           type="button"
           variant="outline"
-          disabled={isSubmitting}
           onClick={() => form.reset()}
         >
           Reset
         </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Creating…" : "Create todo"}
-        </Button>
+        <Button type="submit">Create todo</Button>
       </Field>
     </form>
   )
