@@ -13,9 +13,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { toast } from "@/components/ui/toast"
+import {
+  getTodosInCache,
+  removeTodoFromCache,
+  setTodosInCache,
+  todosQueryKey,
+  updateTodoInCache,
+} from "@/features/todos/cache"
 import { deleteTodo, updateTodo } from "@/features/todos/data"
 import type { Todo, TodoStatus } from "@/features/todos/model"
 import { cn } from "@/lib/utils"
+
+type UpdateTodoInput = {
+  id: string
+  title?: string
+  description?: string | null
+  status?: TodoStatus
+}
 
 const statusLabels: Record<TodoStatus, string> = {
   pending: "Pending",
@@ -32,57 +47,85 @@ const statusClasses: Record<TodoStatus, string> = {
 export const TodoCard = ({ todo }: { todo: Todo }) => {
   const queryClient = useQueryClient()
 
-  const mutationUpdate = useMutation({
-    mutationFn: async (data: {
-      id: string
-      status?: "pending" | "completed" | "archived" | undefined
-      title?: string | undefined
-      description?: string | null | undefined
-    }) =>
-      await updateTodo({
-        data,
-      }),
-    onMutate: async (
-      updatedTodo,
-      context,
-    ): Promise<{ previousTodos: Todo[] }> => {
-      await context.client.cancelQueries({ queryKey: ["todos"] })
-      const previousTodos: Todo[] = context.client.getQueryData(["todos"]) ?? []
+  const updateMutation = useMutation({
+    mutationFn: (input: UpdateTodoInput) => updateTodo({ data: input }),
+    onMutate: async (updatedTodo) => {
+      await queryClient.cancelQueries({ queryKey: todosQueryKey })
 
-      const updatedTodoIndex = previousTodos.findIndex(
-        (t) => t.id === updatedTodo.id,
-      )
-      if (updatedTodoIndex === -1) {
-        return { previousTodos }
+      const previousTodos = getTodosInCache(queryClient)
+      const { id, ...fields } = updatedTodo
+
+      if (previousTodos) {
+        setTodosInCache(
+          queryClient,
+          updateTodoInCache(previousTodos, id, (todo) => ({
+            ...todo,
+            ...fields,
+            updatedAt: new Date().toISOString(),
+          })),
+        )
       }
 
-      const updatedTodoData: Todo = {
-        ...previousTodos[updatedTodoIndex],
-        ...updatedTodo,
-        updatedAt: new Date().toISOString(),
-      }
-
-      const newTodos = [...previousTodos]
-      newTodos[updatedTodoIndex] = updatedTodoData
-
-      context.client.setQueryData(["todos"], newTodos)
       return { previousTodos }
     },
-    onError: (err, newTodo, onMutateResult, context) => {
-      context.client.setQueryData(["todos"], onMutateResult?.previousTodos)
+    onSuccess: (savedTodo) => {
+      toast.add({
+        title: "Todo updated",
+        description: `"${savedTodo.title}" is now ${statusLabels[savedTodo.status].toLowerCase()}.`,
+        type: "success",
+      })
+    },
+    onError: (_error, _variables, onMutateResult) => {
+      setTodosInCache(queryClient, onMutateResult?.previousTodos)
+      toast.add({
+        title: "Could not update todo",
+        description: "The change was reverted. Please try again.",
+        type: "error",
+      })
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] })
+      void queryClient.invalidateQueries({ queryKey: todosQueryKey })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteTodo({ data: { id } }),
+    onMutate: async (todoId) => {
+      await queryClient.cancelQueries({ queryKey: todosQueryKey })
+
+      const previousTodos = getTodosInCache(queryClient)
+      if (previousTodos) {
+        setTodosInCache(queryClient, removeTodoFromCache(previousTodos, todoId))
+      }
+
+      return { previousTodos }
+    },
+    onSuccess: () => {
+      toast.add({
+        title: "Todo deleted",
+        description: `"${todo.title}" was removed from your list.`,
+        type: "success",
+      })
+    },
+    onError: (_error, _todoId, onMutateResult) => {
+      setTodosInCache(queryClient, onMutateResult?.previousTodos)
+      toast.add({
+        title: "Could not delete todo",
+        description: "The todo was restored. Please try again.",
+        type: "error",
+      })
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: todosQueryKey })
     },
   })
 
   const handleUpdate = (status: TodoStatus) => {
-    mutationUpdate.mutate({ id: todo.id, status })
+    updateMutation.mutate({ id: todo.id, status })
   }
 
-  const handleDelete = async () => {
-    await deleteTodo({ data: { id: todo.id } })
-    queryClient.invalidateQueries({ queryKey: ["todos"] })
+  const handleDelete = () => {
+    deleteMutation.mutate(todo.id)
   }
 
   return (

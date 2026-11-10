@@ -12,15 +12,18 @@
     "build": "bunx vite build",
     "preview": "bunx vite preview",
     "db:generate": "bunx --bun prisma generate",
-    "db:push": "bunx --bun prisma db push",
+    "db:push": "bun scripts/push-turso.ts",
+    "db:push:local": "bunx --bun prisma db push",
     "db:migrate": "bunx --bun prisma migrate dev",
     "db:studio": "bunx --bun prisma studio",
-    "db:seed": "bunx --bun prisma db seed"
+    "db:seed": "bunx --bun prisma db seed",
+    "postinstall": "bunx --bun prisma generate"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@hookform/resolvers": "^7.0.2",
+    "@libsql/client": "^0.17.4",
     "@prisma/adapter-better-sqlite3": "^7.4.2",
     "@prisma/adapter-libsql": "^7.10.1",
     "@prisma/client": "^7.4.2",
@@ -36,6 +39,7 @@
     "cn": "^0.5.2",
     "lucide-react": "^1.68.0",
     "motion": "^14.9.1",
+    "nitro": "^3.0.261103-rc",
     "prisma": "^7.4.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
