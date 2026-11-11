@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline — OPGODAV</title>
+    <meta name="theme-color" content="#0F172A" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #0f172a;
+        --muted: #64748b;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --fg: #f8fafc;
+          --muted: #94a3b8;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        text-align: center;
+      }
+
+      main {
+        max-width: 26rem;
+        display: grid;
+        gap: 0.75rem;
+        justify-items: center;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9375rem;
+        line-height: 1.5;
+      }
+
+      button {
+        margin-top: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid currentColor;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: color-mix(in srgb, currentColor 10%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You are offline</h1>
+      <p>
+        The app needs a connection to read and save your todos. Try again when
+        the network is back.
+      </p>
+      <button type="button" onclick="location.reload()">Retry</button>
+    </main>
+  </body>
+</html>
