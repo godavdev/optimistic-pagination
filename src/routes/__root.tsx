@@ -7,6 +7,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import { Toaster } from "../components/ui/toast"
+import { RegisterServiceWorker } from "../integrations/pwa/register-service-worker"
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
 
 import appCss from "../styles.css?url"
@@ -104,6 +105,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <Toaster />
+        {import.meta.env.PROD && <RegisterServiceWorker />}
         <TanStackDevtools
           config={{
             position: "bottom-right",
