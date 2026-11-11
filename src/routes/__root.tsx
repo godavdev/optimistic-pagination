@@ -28,7 +28,35 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "OPGODAV — Todos",
+      },
+      {
+        name: "description",
+        content: "A fast todo list with optimistic pagination.",
+      },
+      {
+        name: "application-name",
+        content: "OPGODAV",
+      },
+      {
+        name: "theme-color",
+        content: "#0F172A",
+      },
+      {
+        name: "mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-capable",
+        content: "yes",
+      },
+      {
+        name: "apple-mobile-web-app-title",
+        content: "OPGODAV",
+      },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "default",
       },
     ],
     links: [
