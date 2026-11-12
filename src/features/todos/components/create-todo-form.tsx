@@ -26,6 +26,8 @@ import {
 } from "@/features/todos/cache"
 import { createTodo } from "@/features/todos/data"
 import type { Todo } from "@/features/todos/model"
+import { useOnline } from "#/hooks/use-online"
+import { useLocalTodos } from "../hooks/use-local-todos"
 
 const FORM_ID = "form-create-todo"
 
@@ -49,6 +51,8 @@ type CreateTodoFormProps = {
 }
 
 export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
+  const isOnline = useOnline()
+  const { addLocalTodo } = useLocalTodos()
   const queryClient = useQueryClient()
 
   const form = useForm<CreateTodoFormValues>({
@@ -59,7 +63,7 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
     },
   })
 
-  const mutation = useMutation({
+  const onlineMutation = useMutation({
     mutationFn: async (variables: CreateTodoFormValues) =>
       await createTodo({
         data: {
@@ -126,8 +130,40 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
     },
   })
 
+  const offlineMutation = useMutation({
+    mutationFn: async (variables: CreateTodoFormValues) => {
+      addLocalTodo({
+        description: variables.description || null,
+        title: variables.title,
+        status: "pending",
+      })
+      return variables
+    },
+    onSuccess: (savedTodo, _variables, onMutateResult) => {
+      toast.add({
+        title: "Todo created",
+        description: `"${savedTodo.title}" was added to your list.`,
+        type: "success",
+      })
+    },
+    onError: (_error, _variables) => {
+      toast.add({
+        title: "Could not create todo",
+        description: "The todo was not created. Please try again.",
+        type: "error",
+      })
+    },
+    onSettled: () => {},
+  })
+
   const onSubmit = form.handleSubmit((values) => {
-    mutation.mutate(values)
+    if (!isOnline) {
+      offlineMutation.mutate(values)
+      form.reset()
+      onCreated?.()
+      return
+    }
+    onlineMutation.mutate(values)
     form.reset()
     onCreated?.()
   })
@@ -156,9 +192,7 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
                 autoComplete="off"
               />
               <FieldDescription>Max 200 characters.</FieldDescription>
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -182,15 +216,16 @@ export const CreateTodoForm = ({ onCreated }: CreateTodoFormProps) => {
               <FieldDescription>
                 Optional. Max 2000 characters.
               </FieldDescription>
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
       </FieldGroup>
 
-      <Field orientation="horizontal" className="justify-end">
+      <Field
+        orientation="horizontal"
+        className="justify-end"
+      >
         <Button
           type="button"
           variant="outline"
